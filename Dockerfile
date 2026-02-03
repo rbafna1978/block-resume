@@ -1,8 +1,9 @@
 FROM texlive/texlive:latest
 
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 ENV PORT=10000
 ENV USE_TECTONIC=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl ca-certificates \
@@ -14,12 +15,10 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 RUN npm run build
-
-ENV NODE_ENV=production
 
 EXPOSE 10000
 
