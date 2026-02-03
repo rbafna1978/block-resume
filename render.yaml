@@ -8,4 +8,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: USE_TECTONIC
+        value: "0"
+      - key: USE_TEXLIVE
         value: "1"

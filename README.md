@@ -40,7 +40,7 @@ Default behavior uses Docker for sandboxing:
 - CPU, memory, and process limits
 - No shell-escape
 
-Set `LATEX_DOCKER_IMAGE` if you want to use a specific compiler image (default is a public TeX Live image on Docker Hub). If you are on Apple Silicon and the image has no arm64 manifest, set `LATEX_DOCKER_PLATFORM=linux/amd64` to run via emulation. If Docker is unavailable, set `USE_TECTONIC=1` to compile with a locally installed `tectonic` binary (still no shell-escape).
+Set `LATEX_DOCKER_IMAGE` if you want to use a specific compiler image (default is a public TeX Live image on Docker Hub). If you are on Apple Silicon and the image has no arm64 manifest, set `LATEX_DOCKER_PLATFORM=linux/amd64` to run via emulation. If Docker is unavailable, set `USE_TECTONIC=1` to compile with a locally installed `tectonic` binary (still no shell-escape). You can also set `USE_TEXLIVE=1` to use a local TeX Live install with `latexmk`.
 
 ## Free Deployment (Render)
 
@@ -55,7 +55,7 @@ Steps:
 
 Notes:
 
-- The Docker image includes TeX Live, and the app compiles using `USE_TECTONIC=1`.
+- The Docker image includes TeX Live, and the app compiles using `USE_TEXLIVE=1` by default on Render.
 - Free tier services can sleep when idle.
 
 ## Notes

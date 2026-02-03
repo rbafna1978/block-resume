@@ -8,6 +8,7 @@ import { validateResumeDocument } from "@/lib/schema";
 
 const DOCKER_IMAGE = process.env.LATEX_DOCKER_IMAGE || "texlive/texlive:latest";
 const USE_TECTONIC = process.env.USE_TECTONIC === "1";
+const USE_TEXLIVE = process.env.USE_TEXLIVE === "1";
 
 const runCommand = (
   command: string,
@@ -93,6 +94,19 @@ const compileWithDocker = async (dir: string) => {
   return runCommand("docker", args, { cwd: dir, timeoutMs: 60000 });
 };
 
+const compileWithTexlive = async (dir: string) => {
+  const args = [
+    "latexmk",
+    "-pdf",
+    "-interaction=nonstopmode",
+    "-halt-on-error",
+    "-file-line-error",
+    "-latexoption=-no-shell-escape",
+    "resume.tex",
+  ];
+  return runCommand("latexmk", args, { cwd: dir, timeoutMs: 8000 });
+};
+
 const compileWithTectonic = async (dir: string) => {
   const args = ["-X", "compile", "resume.tex", "--outdir", dir, "--keep-logs"];
   return runCommand("tectonic", args, { cwd: dir, timeoutMs: 8000 });
@@ -117,12 +131,18 @@ export async function POST(req: Request) {
     const texPath = path.join(tempDir, "resume.tex");
     await fs.writeFile(texPath, latex, "utf8");
 
-    const result = USE_TECTONIC ? await compileWithTectonic(tempDir) : await compileWithDocker(tempDir);
+    const result = USE_TEXLIVE
+      ? await compileWithTexlive(tempDir)
+      : USE_TECTONIC
+        ? await compileWithTectonic(tempDir)
+        : await compileWithDocker(tempDir);
 
     if (result.code !== 0) {
       const latexLogSnippet = await readLogSnippet(tempDir);
       const missingDocker =
-        !USE_TECTONIC && (result.stderr.includes("spawn docker") || result.stderr.includes("ENOENT"));
+        !USE_TECTONIC &&
+        !USE_TEXLIVE &&
+        (result.stderr.includes("spawn docker") || result.stderr.includes("ENOENT"));
       return NextResponse.json(
         {
           message: missingDocker
