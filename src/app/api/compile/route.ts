@@ -94,9 +94,27 @@ const compileWithDocker = async (dir: string) => {
   return runCommand("docker", args, { cwd: dir, timeoutMs: 60000 });
 };
 
+const pickLatexmk = () => {
+  const candidates = [
+    "/usr/bin/latexmk",
+    "/usr/local/bin/latexmk",
+    "/usr/local/texlive/bin/x86_64-linux/latexmk",
+    "/usr/local/texlive/bin/x86_64-linux/latexmk",
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate)) return candidate;
+    } catch {
+      continue;
+    }
+  }
+  return "latexmk";
+};
+
 const compileWithTexlive = async (dir: string) => {
+  const latexmk = pickLatexmk();
   const args = [
-    "latexmk",
+    latexmk,
     "-pdf",
     "-interaction=nonstopmode",
     "-halt-on-error",
@@ -104,7 +122,7 @@ const compileWithTexlive = async (dir: string) => {
     "-latexoption=-no-shell-escape",
     "resume.tex",
   ];
-  return runCommand("latexmk", args, { cwd: dir, timeoutMs: 8000 });
+  return runCommand(args[0], args.slice(1), { cwd: dir, timeoutMs: 8000 });
 };
 
 const compileWithTectonic = async (dir: string) => {
