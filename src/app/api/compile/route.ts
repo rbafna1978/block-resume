@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
+import { existsSync } from "fs";
 import { spawn } from "child_process";
 import { renderLatex } from "@/lib/render";
 import { validateResumeDocument } from "@/lib/schema";
@@ -103,7 +104,7 @@ const pickLatexmk = () => {
   ];
   for (const candidate of candidates) {
     try {
-      if (fs.existsSync(candidate)) return candidate;
+      if (existsSync(candidate)) return candidate;
     } catch {
       continue;
     }
