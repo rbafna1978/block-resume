@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: block-resume
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: USE_TECTONIC
+        value: "1"

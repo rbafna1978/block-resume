@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BlockResume
 
-## Getting Started
+BlockResume is a block-based resume builder. Users edit structured blocks (sections, groups, entries, bullets) and the backend renders safe LaTeX using the Jake Gutierrez template, then compiles to PDF.
 
-First, run the development server:
+## Requirements
+
+- Node.js 18+
+- Docker (recommended) or local `tectonic`
+
+## Setup
+
+```bash
+npm install
+```
+
+Create an optional `.env.local` (see `.env.example`).
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## PDF Compilation
 
-To learn more about Next.js, take a look at the following resources:
+The API endpoint `POST /api/compile` renders LaTeX using `template.tex` and compiles it to `resume.pdf`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Default behavior uses Docker for sandboxing:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Runs a Tectonic-based container with no network
+- CPU, memory, and process limits
+- No shell-escape
 
-## Deploy on Vercel
+Set `LATEX_DOCKER_IMAGE` if you want to use a specific compiler image (default is a public TeX Live image on Docker Hub). If you are on Apple Silicon and the image has no arm64 manifest, set `LATEX_DOCKER_PLATFORM=linux/amd64` to run via emulation. If Docker is unavailable, set `USE_TECTONIC=1` to compile with a locally installed `tectonic` binary (still no shell-escape).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Free Deployment (Render)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Render can deploy this app for free using the provided `Dockerfile` and `render.yaml`.
+
+Steps:
+
+1. Push this repo to GitHub.
+2. Go to Render and create a new **Web Service** from the repo.
+3. Render will detect `render.yaml` and use Docker automatically.
+4. Once deployed, open the service URL.
+
+Notes:
+
+- The Docker image includes TeX Live, and the app compiles using `USE_TECTONIC=1`.
+- Free tier services can sleep when idle.
+
+## Notes
+
+- All user-provided strings are escaped to prevent LaTeX injection.
+- Resume data is stored in `localStorage`.
+- You can export/import JSON from the UI.
+
+## Files
+
+- `template.tex`: base LaTeX template (macros preserved)
+- `src/lib/schema.ts`: data model and runtime validation
+- `src/lib/render.ts`: LaTeX rendering + escaping
+- `src/app/api/compile/route.ts`: PDF compilation endpoint
+- `src/app/page.tsx`: editor + preview UI

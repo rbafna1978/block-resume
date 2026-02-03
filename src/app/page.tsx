@@ -1,64 +1,301 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useEffect, useMemo, useState } from "react";
+import { SectionEditor } from "@/components/SectionEditor";
+import { SectionList } from "@/components/SectionList";
+import { defaultResume } from "@/lib/defaultResume";
+import { ResumeDocument, SectionBlock } from "@/lib/schema";
+
+const STORAGE_KEY = "block-resume-doc";
+
+const cloneDoc = (doc: ResumeDocument): ResumeDocument => JSON.parse(JSON.stringify(doc));
+
+export default function HomePage() {
+  const [doc, setDoc] = useState<ResumeDocument>(() => cloneDoc(defaultResume));
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [compileError, setCompileError] = useState<string | null>(null);
+  const [isCompiling, setIsCompiling] = useState(false);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setDoc(JSON.parse(saved));
+      } catch {
+        setDoc(cloneDoc(defaultResume));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
+  }, [doc]);
+
+  const updateSection = (index: number, section: SectionBlock) => {
+    const next = [...doc.blocks];
+    next[index] = section;
+    setDoc({ ...doc, blocks: next, meta: { ...doc.meta, updatedAt: new Date().toISOString() } });
+  };
+
+  const updateSections = (sections: SectionBlock[]) => {
+    setDoc({ ...doc, blocks: sections, meta: { ...doc.meta, updatedAt: new Date().toISOString() } });
+  };
+
+  const removeSection = (index: number) => {
+    const next = doc.blocks.filter((_, idx) => idx !== index);
+    setDoc({ ...doc, blocks: next, meta: { ...doc.meta, updatedAt: new Date().toISOString() } });
+  };
+
+  const headerLinks = useMemo(() => doc.header.links ?? [], [doc.header.links]);
+
+  const updateHeaderLink = (index: number, patch: { label?: string; url?: string }) => {
+    const next = [...headerLinks];
+    next[index] = { ...next[index], ...patch };
+    setDoc({ ...doc, header: { ...doc.header, links: next } });
+  };
+
+  const addHeaderLink = () => {
+    setDoc({ ...doc, header: { ...doc.header, links: [...headerLinks, { label: "", url: "" }] } });
+  };
+
+  const removeHeaderLink = (index: number) => {
+    const next = headerLinks.filter((_, idx) => idx !== index);
+    setDoc({ ...doc, header: { ...doc.header, links: next } });
+  };
+
+  const compileResume = async () => {
+    setIsCompiling(true);
+    setCompileError(null);
+    try {
+      const response = await fetch("/api/compile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(doc),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        setCompileError(errorBody.latexLogSnippet || errorBody.message || "Compilation failed");
+        setIsCompiling(false);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setPdfUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+    } catch (error) {
+      setCompileError(error instanceof Error ? error.message : "Compilation failed");
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const downloadPdf = () => {
+    if (!pdfUrl) return;
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = `${doc.meta.title || "resume"}.pdf`;
+    link.click();
+  };
+
+  const reset = () => {
+    setDoc(cloneDoc(defaultResume));
+    setPdfUrl(null);
+    setCompileError(null);
+  };
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resume.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importJson = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string) as ResumeDocument;
+        setDoc(data);
+      } catch {
+        setCompileError("Invalid JSON file");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen">
+      <header className="border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+          <div>
+            <h1 className="text-lg font-semibold">BlockResume</h1>
+            <p className="text-xs text-slate-500">Block-based resume builder with LaTeX rendering</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="btn"
+              onClick={reset}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              New
+            </button>
+            <label className="btn">
+              Import JSON
+              <input type="file" className="hidden" accept="application/json" onChange={importJson} />
+            </label>
+            <button
+              type="button"
+              className="btn"
+              onClick={exportJson}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              Export JSON
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={compileResume}
+              disabled={isCompiling}
+            >
+              {isCompiling ? "Compiling..." : "Compile"}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={downloadPdf}
+              disabled={!pdfUrl}
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="space-y-6">
+          <div className="card p-4">
+            <h2 className="text-sm font-semibold">Header</h2>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="Name"
+                value={doc.header.name}
+                onChange={(event) => setDoc({ ...doc, header: { ...doc.header, name: event.target.value } })}
+              />
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="Location"
+                value={doc.header.location}
+                onChange={(event) =>
+                  setDoc({ ...doc, header: { ...doc.header, location: event.target.value } })
+                }
+              />
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="Phone"
+                value={doc.header.phone}
+                onChange={(event) => setDoc({ ...doc, header: { ...doc.header, phone: event.target.value } })}
+              />
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="Email"
+                value={doc.header.email}
+                onChange={(event) => setDoc({ ...doc, header: { ...doc.header, email: event.target.value } })}
+              />
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="LinkedIn (slug or URL)"
+                value={doc.header.linkedin}
+                onChange={(event) =>
+                  setDoc({ ...doc, header: { ...doc.header, linkedin: event.target.value } })
+                }
+              />
+              <input
+                className="rounded-lg border border-slate-200 p-2 text-sm"
+                placeholder="GitHub (handle or URL)"
+                value={doc.header.github}
+                onChange={(event) => setDoc({ ...doc, header: { ...doc.header, github: event.target.value } })}
+              />
+            </div>
+            <div className="mt-3 space-y-2">
+              <div className="text-xs font-semibold text-slate-500">Additional Links</div>
+              {headerLinks.map((link, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    className="flex-1 rounded-lg border border-slate-200 p-2 text-sm"
+                    placeholder="Label"
+                    value={link.label}
+                    onChange={(event) => updateHeaderLink(index, { label: event.target.value })}
+                  />
+                  <input
+                    className="flex-[2] rounded-lg border border-slate-200 p-2 text-sm"
+                    placeholder="URL"
+                    value={link.url}
+                    onChange={(event) => updateHeaderLink(index, { url: event.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => removeHeaderLink(index)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="btn" onClick={addHeaderLink}>
+                Add link
+              </button>
+            </div>
+          </div>
+
+          <div className="card p-4">
+            <h2 className="text-sm font-semibold">Sections</h2>
+            <div className="mt-3">
+              <SectionList sections={doc.blocks} onChange={updateSections} />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {doc.blocks.map((section, index) => (
+              <SectionEditor
+                key={section.id}
+                section={section}
+                onChange={(next) => updateSection(index, next)}
+                onRemove={() => removeSection(index)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="card p-4">
+            <h2 className="text-sm font-semibold">Preview</h2>
+            {pdfUrl ? (
+              <iframe className="mt-3 h-[80vh] w-full rounded-lg border border-slate-200" src={pdfUrl} />
+            ) : (
+              <div className="mt-3 rounded-lg border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                Compile to preview PDF.
+              </div>
+            )}
+          </div>
+          {compileError && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              <div className="font-semibold">Compilation failed</div>
+              <details className="mt-2 whitespace-pre-wrap text-xs">
+                <summary className="cursor-pointer">Show log snippet</summary>
+                {compileError}
+              </details>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
