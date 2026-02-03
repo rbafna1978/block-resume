@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SectionBlock, SectionType } from "@/lib/schema";
+import { SectionBlock, SectionItem, SectionType } from "@/lib/schema";
 
 type Props = {
   sections: SectionBlock[];
@@ -120,12 +120,12 @@ export const SectionList: React.FC<Props> = ({ sections, onChange }) => {
   );
 };
 
-const createInitialItems = (type: SectionType) => {
+const createInitialItems = (type: SectionType): SectionItem[] => {
   switch (type) {
     case "skills":
-      return [{ kind: "skills", categories: [] }];
+      return [{ kind: "skills", categories: [] } satisfies SectionItem];
     case "summary":
-      return [{ kind: "summary", text: "" }];
+      return [{ kind: "summary", text: "" } satisfies SectionItem];
     case "leadership_experience":
     case "volunteer_experience":
       return [
@@ -136,29 +136,63 @@ const createInitialItems = (type: SectionType) => {
           company: "",
           location: "",
           bullets: [],
-        },
+        } satisfies SectionItem,
       ];
     case "additional_projects":
-      return [{ kind: "projects", left: "", dateRight: "", bullets: [] }];
+      return [{ kind: "projects", left: "", dateRight: "", bullets: [] } satisfies SectionItem];
     case "publications":
     case "certifications":
     case "awards":
-      return [{ kind: "generic_entries", headingLeft: "", headingRight: "", subLeft: "", subRight: "", bullets: [] }];
+      return [
+        {
+          kind: "generic_entries",
+          headingLeft: "",
+          headingRight: "",
+          subLeft: "",
+          subRight: "",
+          bullets: [],
+        } satisfies SectionItem,
+      ];
     case "activities":
     case "coursework":
     case "interests":
     case "highlights":
-      return [{ kind: "generic_bullets", bullets: [] }];
+      return [{ kind: "generic_bullets", bullets: [] } satisfies SectionItem];
     case "generic_bullets":
-      return [{ kind: "generic_bullets", bullets: [] }];
+      return [{ kind: "generic_bullets", bullets: [] } satisfies SectionItem];
     case "generic_entries":
-      return [{ kind: "generic_entries", headingLeft: "", headingRight: "", bullets: [] }];
+      return [
+        {
+          kind: "generic_entries",
+          headingLeft: "",
+          headingRight: "",
+          bullets: [],
+        } satisfies SectionItem,
+      ];
     case "education":
-      return [{ kind: "education", school: "", location: "", degreeLine: "", dateRight: "", bullets: [] }];
+      return [
+        {
+          kind: "education",
+          school: "",
+          location: "",
+          degreeLine: "",
+          dateRight: "",
+          bullets: [],
+        } satisfies SectionItem,
+      ];
     case "experience":
-      return [{ kind: "experience", role: "", dateRight: "", company: "", location: "", bullets: [] }];
+      return [
+        {
+          kind: "experience",
+          role: "",
+          dateRight: "",
+          company: "",
+          location: "",
+          bullets: [],
+        } satisfies SectionItem,
+      ];
     case "projects":
     default:
-      return [{ kind: "projects", left: "", dateRight: "", bullets: [] }];
+      return [{ kind: "projects", left: "", dateRight: "", bullets: [] } satisfies SectionItem];
   }
 };
