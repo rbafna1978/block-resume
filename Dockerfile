@@ -1,6 +1,6 @@
 FROM texlive/texlive:latest
 
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=10000
 ENV USE_TECTONIC=1
 
@@ -18,6 +18,8 @@ RUN npm ci
 
 COPY . .
 RUN npm run build
+
+ENV NODE_ENV=production
 
 EXPOSE 10000
 
