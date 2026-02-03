@@ -6,7 +6,7 @@ ENV USE_TECTONIC=1
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl xz-utils nodejs npm latexmk \
+  && apt-get install -y --no-install-recommends ca-certificates curl xz-utils nodejs npm texlive-extra-utils \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
