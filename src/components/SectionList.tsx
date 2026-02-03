@@ -123,76 +123,76 @@ export const SectionList: React.FC<Props> = ({ sections, onChange }) => {
 const createInitialItems = (type: SectionType): SectionItem[] => {
   switch (type) {
     case "skills":
-      return [{ kind: "skills", categories: [] } satisfies SectionItem];
+      return [{ kind: "skills" as const, categories: [] }];
     case "summary":
-      return [{ kind: "summary", text: "" } satisfies SectionItem];
+      return [{ kind: "summary" as const, text: "" }];
     case "leadership_experience":
     case "volunteer_experience":
       return [
         {
-          kind: "experience",
+          kind: "experience" as const,
           role: "",
           dateRight: "",
           company: "",
           location: "",
           bullets: [],
-        } satisfies SectionItem,
+        },
       ];
     case "additional_projects":
-      return [{ kind: "projects", left: "", dateRight: "", bullets: [] } satisfies SectionItem];
+      return [{ kind: "projects" as const, left: "", dateRight: "", bullets: [] }];
     case "publications":
     case "certifications":
     case "awards":
       return [
         {
-          kind: "generic_entries",
+          kind: "generic_entries" as const,
           headingLeft: "",
           headingRight: "",
           subLeft: "",
           subRight: "",
           bullets: [],
-        } satisfies SectionItem,
+        },
       ];
     case "activities":
     case "coursework":
     case "interests":
     case "highlights":
-      return [{ kind: "generic_bullets", bullets: [] } satisfies SectionItem];
+      return [{ kind: "generic_bullets" as const, bullets: [] }];
     case "generic_bullets":
-      return [{ kind: "generic_bullets", bullets: [] } satisfies SectionItem];
+      return [{ kind: "generic_bullets" as const, bullets: [] }];
     case "generic_entries":
       return [
         {
-          kind: "generic_entries",
+          kind: "generic_entries" as const,
           headingLeft: "",
           headingRight: "",
           bullets: [],
-        } satisfies SectionItem,
+        },
       ];
     case "education":
       return [
         {
-          kind: "education",
+          kind: "education" as const,
           school: "",
           location: "",
           degreeLine: "",
           dateRight: "",
           bullets: [],
-        } satisfies SectionItem,
+        },
       ];
     case "experience":
       return [
         {
-          kind: "experience",
+          kind: "experience" as const,
           role: "",
           dateRight: "",
           company: "",
           location: "",
           bullets: [],
-        } satisfies SectionItem,
+        },
       ];
     case "projects":
     default:
-      return [{ kind: "projects", left: "", dateRight: "", bullets: [] } satisfies SectionItem];
+      return [{ kind: "projects" as const, left: "", dateRight: "", bullets: [] }];
   }
 };
