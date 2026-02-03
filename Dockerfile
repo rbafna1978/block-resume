@@ -21,8 +21,13 @@ RUN set -eux; \
   esac; \
   url="https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-${target}.tar.gz"; \
   curl -L -o /tmp/tectonic.tar.gz "$url"; \
-  tar -xzf /tmp/tectonic.tar.gz -C /tmp; \
-  mv /tmp/tectonic-*/tectonic /usr/local/bin/tectonic; \
+  mkdir -p /tmp/tectonic; \
+  tar -xzf /tmp/tectonic.tar.gz -C /tmp/tectonic; \
+  if [ -f /tmp/tectonic/tectonic ]; then \
+    mv /tmp/tectonic/tectonic /usr/local/bin/tectonic; \
+  else \
+    mv "$(find /tmp/tectonic -type f -name tectonic | head -n 1)" /usr/local/bin/tectonic; \
+  fi; \
   chmod +x /usr/local/bin/tectonic; \
   rm -rf /tmp/tectonic*
 
