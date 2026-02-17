@@ -7,7 +7,7 @@ ENV USE_TECTONIC=0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl perl texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-extra-utils \
+  && apt-get install -y --no-install-recommends ca-certificates curl perl latexmk texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-extra-utils \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
