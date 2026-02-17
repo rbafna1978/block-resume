@@ -23,6 +23,14 @@ export const GroupEditor: React.FC<Props> = ({ type, group, onChange, onRemove }
     onChange({ ...group, items: nextItems });
   };
 
+  const duplicateItem = (index: number) => {
+    const source = group.items[index];
+    if (!source) return;
+    const nextItems = [...group.items];
+    nextItems.splice(index + 1, 0, { ...source });
+    onChange({ ...group, items: nextItems });
+  };
+
   const moveItem = (index: number, direction: number) => {
     const nextItems = [...group.items];
     const target = index + direction;
@@ -49,6 +57,9 @@ export const GroupEditor: React.FC<Props> = ({ type, group, onChange, onRemove }
           <div key={index} className="space-y-2">
             <ItemEditor type={type} item={item} onChange={(next) => updateItem(index, next)} />
             <div className="flex gap-2">
+              <button type="button" className="btn" onClick={() => duplicateItem(index)}>
+                Duplicate
+              </button>
               <button
                 type="button"
                 className="btn"
@@ -95,7 +106,9 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "experience":
+    case "research_experience":
     case "leadership_experience":
+    case "positions_of_responsibility":
     case "volunteer_experience":
       return {
         kind: "experience",
@@ -106,6 +119,7 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "projects":
+    case "hackathons":
     case "additional_projects":
       return {
         kind: "projects",
@@ -116,6 +130,7 @@ const createItem = (type: SectionType): SectionItem => {
     case "publications":
     case "certifications":
     case "awards":
+    case "achievements":
     case "generic_entries":
       return {
         kind: "generic_entries",
@@ -126,6 +141,7 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "activities":
+    case "extracurriculars":
     case "coursework":
     case "interests":
     case "highlights":

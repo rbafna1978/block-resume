@@ -1,16 +1,21 @@
 export type SectionType =
   | "education"
   | "experience"
+  | "research_experience"
   | "leadership_experience"
+  | "positions_of_responsibility"
   | "volunteer_experience"
   | "projects"
+  | "hackathons"
   | "additional_projects"
   | "skills"
   | "summary"
   | "publications"
   | "certifications"
   | "awards"
+  | "achievements"
   | "activities"
+  | "extracurriculars"
   | "coursework"
   | "interests"
   | "highlights"
@@ -115,16 +120,21 @@ const isArray = (value: unknown) => Array.isArray(value);
 const isSectionType = (value: unknown): value is SectionType =>
   value === "education" ||
   value === "experience" ||
+  value === "research_experience" ||
   value === "leadership_experience" ||
+  value === "positions_of_responsibility" ||
   value === "volunteer_experience" ||
   value === "projects" ||
+  value === "hackathons" ||
   value === "additional_projects" ||
   value === "skills" ||
   value === "summary" ||
   value === "publications" ||
   value === "certifications" ||
   value === "awards" ||
+  value === "achievements" ||
   value === "activities" ||
+  value === "extracurriculars" ||
   value === "coursework" ||
   value === "interests" ||
   value === "highlights" ||

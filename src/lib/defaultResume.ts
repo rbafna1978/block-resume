@@ -8,8 +8,8 @@ export const defaultResume: ResumeDocument = {
   },
   header: {
     name: "John Doe",
-    location: "San Francisco, CA",
-    phone: "415-555-0198",
+    location: "Austin, TX",
+    phone: "(555) 010-0198",
     email: "john.doe@example.com",
     linkedin: "john-doe",
     github: "johndoe",
@@ -24,18 +24,17 @@ export const defaultResume: ResumeDocument = {
       items: [
         {
           kind: "education",
-          school: "Stanford University",
-          location: "Stanford, CA",
-          degreeLine: "Master of Science in Computer Science --- GPA: 3.9",
+          school: "Example State University",
+          location: "Austin, TX",
+          degreeLine: "Master of Science in Computer Science --- GPA: 3.9/4.0",
           dateRight: "Aug 2024 -- Jun 2026",
           bullets: [],
         },
         {
           kind: "education",
-          school: "University of California, Berkeley",
-          location: "Berkeley, CA",
-          degreeLine:
-            "Bachelor of Science in Computer Science --- GPA: 3.8",
+          school: "City University",
+          location: "Austin, TX",
+          degreeLine: "Bachelor of Science in Computer Science --- GPA: 3.8/4.0",
           dateRight: "May 2024",
           bullets: [
             "Relevant Coursework: Data Structures & Algorithms, Databases, Operating Systems, Distributed Systems, Software Design & Testing",
@@ -53,8 +52,8 @@ export const defaultResume: ResumeDocument = {
           kind: "experience",
           role: "Software Engineering Intern",
           dateRight: "Jun 2025 -- Aug 2025",
-          company: "Northstar Labs",
-          location: "San Francisco, CA",
+          company: "Acme Technologies",
+          location: "Remote",
           bullets: [
             "Built full-stack features using React and Node.js for a customer onboarding platform used by 10+ internal teams.",
             "Designed REST APIs with validation and logging to support reliable data exchange and end-to-end testing.",
@@ -65,8 +64,8 @@ export const defaultResume: ResumeDocument = {
           kind: "experience",
           role: "Software Engineering Intern",
           dateRight: "May 2024 -- Aug 2024",
-          company: "Blue Ridge Analytics",
-          location: "Berkeley, CA",
+          company: "BlueSky Analytics",
+          location: "Austin, TX",
           bullets: [
             "Refactored backend services and SQL queries supporting internal reporting tools used by 4 business teams.",
             "Debugged production issues and improved regression test coverage for bi-weekly releases.",

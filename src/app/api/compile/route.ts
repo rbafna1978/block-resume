@@ -10,6 +10,14 @@ import { validateResumeDocument } from "@/lib/schema";
 const DOCKER_IMAGE = process.env.LATEX_DOCKER_IMAGE || "texlive/texlive:latest";
 const USE_TECTONIC = process.env.USE_TECTONIC === "1";
 const USE_TEXLIVE = process.env.USE_TEXLIVE === "1";
+const AUTO_COMPILER_FALLBACK = process.env.AUTO_COMPILER_FALLBACK !== "0";
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+
+const corsHeaders = () => ({
+  "Access-Control-Allow-Origin": CORS_ORIGIN,
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+});
 
 const runCommand = (
   command: string,
@@ -100,7 +108,7 @@ const pickLatexmk = () => {
     "/usr/bin/latexmk",
     "/usr/local/bin/latexmk",
     "/usr/local/texlive/bin/x86_64-linux/latexmk",
-    "/usr/local/texlive/bin/x86_64-linux/latexmk",
+    "/usr/local/texlive/bin/aarch64-linux/latexmk",
   ];
   for (const candidate of candidates) {
     try {
@@ -123,12 +131,41 @@ const compileWithTexlive = async (dir: string) => {
     "-latexoption=-no-shell-escape",
     "resume.tex",
   ];
-  return runCommand(args[0], args.slice(1), { cwd: dir, timeoutMs: 8000 });
+  return runCommand(args[0], args.slice(1), { cwd: dir, timeoutMs: 60000 });
 };
 
 const compileWithTectonic = async (dir: string) => {
   const args = ["-X", "compile", "resume.tex", "--outdir", dir, "--keep-logs"];
-  return runCommand("tectonic", args, { cwd: dir, timeoutMs: 8000 });
+  return runCommand("tectonic", args, { cwd: dir, timeoutMs: 60000 });
+};
+
+const isCommandMissing = (result: { code: number | null; stderr: string }) =>
+  result.code === 127 || result.stderr.includes("ENOENT") || result.stderr.includes("spawn ");
+
+const isDockerUnavailable = (result: { stderr: string }) =>
+  result.stderr.includes("Cannot connect to the Docker daemon") ||
+  result.stderr.includes("Is the docker daemon running?") ||
+  result.stderr.includes("spawn docker");
+
+const compileAuto = async (dir: string) => {
+  const docker = await compileWithDocker(dir);
+  if (docker.code === 0) return docker;
+  if (!AUTO_COMPILER_FALLBACK || !isDockerUnavailable(docker)) return docker;
+
+  const tectonic = await compileWithTectonic(dir);
+  if (tectonic.code === 0) return tectonic;
+  if (!isCommandMissing(tectonic)) return tectonic;
+
+  const texlive = await compileWithTexlive(dir);
+  if (texlive.code === 0) return texlive;
+  if (!isCommandMissing(texlive)) return texlive;
+
+  return {
+    code: 127,
+    stdout: "",
+    stderr:
+      "No PDF compiler is available. Start Docker Desktop, or install a local compiler and set USE_TECTONIC=1 or USE_TEXLIVE=1.",
+  };
 };
 
 export async function POST(req: Request) {
@@ -136,11 +173,11 @@ export async function POST(req: Request) {
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ message: "Invalid JSON" }, { status: 400 });
+    return NextResponse.json({ message: "Invalid JSON" }, { status: 400, headers: corsHeaders() });
   }
 
   if (!validateResumeDocument(payload)) {
-    return NextResponse.json({ message: "Invalid resume schema" }, { status: 400 });
+    return NextResponse.json({ message: "Invalid resume schema" }, { status: 400, headers: corsHeaders() });
   }
 
   const resume = payload;
@@ -154,22 +191,22 @@ export async function POST(req: Request) {
       ? await compileWithTexlive(tempDir)
       : USE_TECTONIC
         ? await compileWithTectonic(tempDir)
-        : await compileWithDocker(tempDir);
+        : await compileAuto(tempDir);
 
     if (result.code !== 0) {
       const latexLogSnippet = await readLogSnippet(tempDir);
       const missingDocker =
         !USE_TECTONIC &&
         !USE_TEXLIVE &&
-        (result.stderr.includes("spawn docker") || result.stderr.includes("ENOENT"));
+        isDockerUnavailable(result);
       return NextResponse.json(
         {
           message: missingDocker
-            ? "Docker not found. Install Docker or set USE_TECTONIC=1 to use a local tectonic binary."
+            ? "Docker is not available. Start Docker Desktop or configure USE_TECTONIC=1 / USE_TEXLIVE=1."
             : "Compilation failed",
           latexLogSnippet: latexLogSnippet || result.stderr || result.stdout,
         },
-        { status: 500 }
+        { status: 500, headers: corsHeaders() }
       );
     }
 
@@ -178,6 +215,7 @@ export async function POST(req: Request) {
     return new NextResponse(pdf, {
       headers: {
         "Content-Type": "application/pdf",
+        ...corsHeaders(),
       },
     });
   } catch (error) {
@@ -187,9 +225,13 @@ export async function POST(req: Request) {
         message: "Compilation failed",
         latexLogSnippet: latexLogSnippet || (error instanceof Error ? error.message : "Unknown error"),
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders() }
     );
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders() });
 }

@@ -195,16 +195,21 @@ const renderGroup = (group: GroupBlock, sectionType: SectionBlock["type"]) => {
 
 const normalizeSectionType = (type: SectionBlock["type"]) => {
   switch (type) {
+    case "research_experience":
     case "leadership_experience":
+    case "positions_of_responsibility":
     case "volunteer_experience":
       return "experience";
+    case "hackathons":
     case "additional_projects":
       return "projects";
     case "publications":
     case "certifications":
     case "awards":
+    case "achievements":
       return "generic_entries";
     case "activities":
+    case "extracurriculars":
     case "coursework":
     case "interests":
     case "highlights":
@@ -260,7 +265,7 @@ export const renderLatex = (doc: ResumeDocument) => {
   const extraLinks = doc.header.links
     .filter((link) => link.label.trim().length > 0 && link.url.trim().length > 0)
     .map((link) => {
-      const url = escapeLatex(link.url.trim());
+      const url = escapeLatex(ensureHttps(link.url.trim()));
       const label = escapeLatex(link.label.trim());
       return ` $|$ \\href{${url}}{\\underline{${label}}}`;
     })

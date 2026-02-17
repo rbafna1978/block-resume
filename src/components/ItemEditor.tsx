@@ -259,16 +259,21 @@ export const ItemEditor: React.FC<Props> = ({ type, item, onChange }) => {
 
 const normalizeSectionType = (type: SectionType) => {
   switch (type) {
+    case "research_experience":
     case "leadership_experience":
+    case "positions_of_responsibility":
     case "volunteer_experience":
       return "experience";
+    case "hackathons":
     case "additional_projects":
       return "projects";
     case "publications":
     case "certifications":
     case "awards":
+    case "achievements":
       return "generic_entries";
     case "activities":
+    case "extracurriculars":
     case "coursework":
     case "interests":
     case "highlights":

@@ -2,6 +2,7 @@ import React from "react";
 import { SectionBlock, SectionItem, SectionType, GroupBlock } from "@/lib/schema";
 import { ItemEditor } from "@/components/ItemEditor";
 import { GroupEditor } from "@/components/GroupEditor";
+import { createId } from "@/lib/id";
 
 type Props = {
   section: SectionBlock;
@@ -23,6 +24,14 @@ export const SectionEditor: React.FC<Props> = ({ section, onChange, onRemove }) 
     onChange({ ...section, items: nextItems });
   };
 
+  const duplicateItem = (index: number) => {
+    const source = section.items[index];
+    if (!source) return;
+    const nextItems = [...section.items];
+    nextItems.splice(index + 1, 0, { ...source });
+    onChange({ ...section, items: nextItems });
+  };
+
   const moveItem = (index: number, direction: number) => {
     const nextItems = [...section.items];
     const target = index + direction;
@@ -40,7 +49,7 @@ export const SectionEditor: React.FC<Props> = ({ section, onChange, onRemove }) 
 
   const addGroup = () => {
     const nextGroups = section.groups ? [...section.groups] : [];
-    nextGroups.push({ id: `group-${Date.now()}`, title: "New Group", items: [] });
+    nextGroups.push({ id: createId("group"), title: "New Group", items: [] });
     onChange({ ...section, groups: nextGroups });
   };
 
@@ -56,6 +65,20 @@ export const SectionEditor: React.FC<Props> = ({ section, onChange, onRemove }) 
     const target = index + direction;
     if (target < 0 || target >= nextGroups.length) return;
     [nextGroups[index], nextGroups[target]] = [nextGroups[target], nextGroups[index]];
+    onChange({ ...section, groups: nextGroups });
+  };
+
+  const duplicateGroup = (index: number) => {
+    if (!section.groups) return;
+    const source = section.groups[index];
+    if (!source) return;
+    const nextGroups = [...section.groups];
+    nextGroups.splice(index + 1, 0, {
+      ...source,
+      id: createId("group"),
+      title: `${source.title} (Copy)`,
+      items: [...source.items],
+    });
     onChange({ ...section, groups: nextGroups });
   };
 
@@ -114,6 +137,13 @@ export const SectionEditor: React.FC<Props> = ({ section, onChange, onRemove }) 
                 <button
                   type="button"
                   className="btn"
+                  onClick={() => duplicateGroup(index)}
+                >
+                  Duplicate group
+                </button>
+                <button
+                  type="button"
+                  className="btn"
                   onClick={() => moveGroup(index, -1)}
                 >
                   Move group up
@@ -142,6 +172,9 @@ export const SectionEditor: React.FC<Props> = ({ section, onChange, onRemove }) 
             <div key={index} className="space-y-2">
               <ItemEditor type={section.type} item={item} onChange={(next) => updateItem(index, next)} />
               <div className="flex gap-2">
+                <button type="button" className="btn" onClick={() => duplicateItem(index)}>
+                  Duplicate item
+                </button>
                 <button
                   type="button"
                   className="btn"
@@ -187,7 +220,9 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "experience":
+    case "research_experience":
     case "leadership_experience":
+    case "positions_of_responsibility":
     case "volunteer_experience":
       return {
         kind: "experience",
@@ -198,6 +233,7 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "projects":
+    case "hackathons":
     case "additional_projects":
       return {
         kind: "projects",
@@ -208,6 +244,7 @@ const createItem = (type: SectionType): SectionItem => {
     case "publications":
     case "certifications":
     case "awards":
+    case "achievements":
     case "generic_entries":
       return {
         kind: "generic_entries",
@@ -218,6 +255,7 @@ const createItem = (type: SectionType): SectionItem => {
         bullets: [],
       };
     case "activities":
+    case "extracurriculars":
     case "coursework":
     case "interests":
     case "highlights":
